@@ -24,7 +24,8 @@ with open(
 
 # Compute dependencies.
 INSTALL_REQUIRES = [
-    "requests >= 2.7.0, < 3"
+    "requests >= 2.7.0, < 3",
+    "numpy >= 1.13.3, < 2"
 ]
 DOC_REQUIRES = [
     "sphinx >= 1.6.2, < 2",

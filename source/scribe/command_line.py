@@ -9,6 +9,7 @@ import codecs
 import string
 
 import requests
+import numpy as np
 
 logging.basicConfig(
     stream=sys.stderr, level=logging.INFO,
@@ -38,6 +39,8 @@ def construct_parser():
         dest="subcommand"
     )
 
+    # Assemble sub-parser
+
     assemble_subparser = subparsers.add_parser(
         "assemble", help="Assemble all world contained in a file.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -63,6 +66,25 @@ def construct_parser():
         help="Cut off the targeted content after this index value.",
     )
 
+    # Analyze sub-parser
+
+    analyze_subparser = subparsers.add_parser(
+        "analyze", help=(
+            "Process a list of work to generate transition probabilities."
+        ),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+
+    analyze_subparser.add_argument(
+        "target", help="Path to the list of words to process."
+    )
+
+    analyze_subparser.add_argument(
+        "-o", "--output",
+        help="Path to the generated file.",
+        default=os.path.join(os.getcwd(), "probability.bin")
+    )
+
     return parser
 
 
@@ -80,36 +102,61 @@ def main(arguments=None):
     if namespace.subcommand == "assemble":
         logger.info("Assemble words from target: {0}".format(namespace.target))
 
-        output = os.path.abspath(namespace.output)
-        output_directory = os.path.dirname(output)
-        if not os.access(output_directory, os.W_OK):
-            logger.error(
-                "The output directory is inaccessible: {0}".format(
-                    output_directory
-                )
-            )
-            return
-
-        words = set()
-
         try:
+            output = validate_output(namespace.output)
             content = fetch_target_content(
                 namespace.target,
                 start=namespace.start,
                 end=namespace.end
             )
+
+            words = set()
+            for word in yield_words_from_content(content):
+                words.add(word)
+
+            logger.info("Writing {0} words to {1}".format(len(words), output))
+
+            with open(output, "w") as f:
+                f.write("\n".join(sorted(words)))
+
         except Exception as err:
             logger.error(
                 "[{0}] {1}".format(err.__class__.__name__, str(err))
             )
-        else:
-            for word in yield_words_from_content(content):
-                words.add(word)
 
-        logger.info("Writing {0} words to {1}".format(len(words), output))
+    elif namespace.subcommand == "analyze":
+        logger.info(
+            "Generate probabilities from target: {0}".format(namespace.target)
+        )
 
-        with open(output, "w") as f:
-            f.write("\n".join(sorted(words)))
+        try:
+            output = validate_output(namespace.output)
+            content = fetch_target_content(namespace.target)
+            matrix = create_probability_matrix_from_words(content.split("\n"))
+            matrix.tofile(output)
+
+        except Exception as err:
+            logger.error(
+                "[{0}] {1}".format(err.__class__.__name__, str(err))
+            )
+
+
+def validate_output(path):
+    """Return validated output *path*.
+
+    Raise :exc:`IOError` if the output directory is inaccessible.
+
+    """
+    output = os.path.abspath(path)
+    output_directory = os.path.dirname(output)
+    if not os.access(output_directory, os.W_OK):
+        raise IOError(
+            "The output directory is inaccessible: {0}".format(
+                output_directory
+            )
+        )
+
+    return output
 
 
 def fetch_target_content(target, start=None, end=None):
@@ -140,7 +187,7 @@ def fetch_target_content(target, start=None, end=None):
                 "The targeted url is inaccessible: {0}".format(target)
             )
 
-        r.encoding = 'utf-8'
+        r.encoding = "ISO-8859-1"
         return r.text[start:end]
 
     target_file = os.path.abspath(target)
@@ -149,7 +196,7 @@ def fetch_target_content(target, start=None, end=None):
             "The targeted file is not readable: {0}".format(target_file)
         )
 
-    with codecs.open(target_file, "r", encoding="utf8") as f:
+    with codecs.open(target_file, "r", encoding="ISO-8859-1") as f:
         return f.read()[start:end]
 
 
@@ -186,3 +233,24 @@ def yield_words_from_content(content):
             word = ""
 
 
+def create_probability_matrix_from_words(words):
+    """Return probability matrix generated from list of *words*.
+    """
+    matrix = np.zeros((256, 256, 256), dtype="int32")
+
+    letter_buffer1 = 0
+    letter_buffer2 = 0
+
+    for word in words:
+        word = "\n{}\n".format(word)
+        for letter in word:
+            if (
+                letter not in string.punctuation and
+                not letter.isdigit()
+            ):
+                ordinal = ord(letter)
+                matrix[letter_buffer1, letter_buffer2, ordinal] += 1
+                letter_buffer1 = letter_buffer2
+                letter_buffer2 = ordinal
+
+    return matrix
