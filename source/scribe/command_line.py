@@ -53,6 +53,16 @@ def construct_parser():
         default=os.path.join(os.getcwd(), "words.txt")
     )
 
+    assemble_subparser.add_argument(
+        "-s", "--start", type=int,
+        help="Cut off the targeted content before this index value.",
+    )
+
+    assemble_subparser.add_argument(
+        "-e", "--end", type=int,
+        help="Cut off the targeted content after this index value.",
+    )
+
     return parser
 
 
@@ -83,7 +93,11 @@ def main(arguments=None):
         words = set()
 
         try:
-            content = fetch_target_content(namespace.target)
+            content = fetch_target_content(
+                namespace.target,
+                start=namespace.start,
+                end=namespace.end
+            )
         except Exception as err:
             logger.error(
                 "[{0}] {1}".format(err.__class__.__name__, str(err))
@@ -98,18 +112,25 @@ def main(arguments=None):
             f.write("\n".join(sorted(words)))
 
 
-def fetch_target_content(target):
+def fetch_target_content(target, start=None, end=None):
     """Return content from *target*.
 
     *target* can be a file or a url.
 
+    *start* and *end* indices can be set to return a particular slice of the
+    content.
+
     Example::
 
         >>> fetch_target_content(
-        >>>     "https://www.gutenberg.org/files/2701/old/moby10b.txt"
-        >>> )
-        **The Project Gutenberg Etext of Moby Dick, by Herman Melville**\\r\\n
-        #3in our series by Herman Melville\\r\\n\\r...
+        ...     "https://www.gutenberg.org/files/2701/old/moby10b.txt",
+        ...     start=35044, end=35302
+        ... )
+        CHAPTER 1\\r\\n\\r\\nLoomings.\\r\\n\\r\\n\\r\\nCall me Ishmael.
+        Some years ago--never mind how long\\r\\nprecisely--having little or no
+        money in my purse, and nothing\\r\\nparticular to interest me on shore,
+        I thought I would sail about a\\r\\nlittle and see the watery part of
+        the world.
 
     """
     if re.match("^https?://", target):
@@ -120,7 +141,7 @@ def fetch_target_content(target):
             )
 
         r.encoding = 'utf-8'
-        return r.text
+        return r.text[start:end]
 
     target_file = os.path.abspath(target)
     if not os.path.isfile(target_file) and os.access(target_file, os.R_OK):
@@ -129,13 +150,13 @@ def fetch_target_content(target):
         )
 
     with codecs.open(target_file, "r", encoding="utf8") as f:
-        return f.read()
+        return f.read()[start:end]
 
 
 def yield_words_from_content(content):
     """Yield each word found in *content*.
 
-    Filter out whitespaces and punctuation.
+    Filter out whitespaces, numbers and punctuation.
 
     Example::
 
