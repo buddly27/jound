@@ -2,4 +2,4 @@
 Jound
 #####
 
-A word generator using statistics from a book
+A word generator using Markov chain.

@@ -4,7 +4,7 @@
 Jound
 #####
 
-A word generator using statistics from a book
+A word generator using :term:`Markov chain`.
 
 .. toctree::
     :maxdepth: 1
