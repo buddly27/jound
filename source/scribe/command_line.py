@@ -1,5 +1,7 @@
 # :coding: utf-8
 
+from __future__ import print_function
+
 import os
 import sys
 import re
@@ -11,11 +13,18 @@ import string
 import requests
 import numpy as np
 
+# Silence invalid floating-point operation error as it is taken into account
+# in the algorithm
+np.seterr(invalid="ignore")
+
+
+# Setup the logging format
 logging.basicConfig(
     stream=sys.stderr, level=logging.INFO,
     format="[%(name)s] %(levelname)s: %(message)s"
 )
 
+# Command line logger
 logger = logging.getLogger("scribe")
 
 
@@ -70,7 +79,8 @@ def construct_parser():
 
     analyze_subparser = subparsers.add_parser(
         "analyze", help=(
-            "Process a list of work to generate transition probabilities."
+            "Process a list of words to generate statistic matrix on letters "
+            "transitions."
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
@@ -82,7 +92,24 @@ def construct_parser():
     analyze_subparser.add_argument(
         "-o", "--output",
         help="Path to the generated file.",
-        default=os.path.join(os.getcwd(), "probability.bin")
+        default=os.path.join(os.getcwd(), "stats.bin")
+    )
+
+    # Generate sub-parser
+
+    generate_subparser = subparsers.add_parser(
+        "generate", help="Generate words from a probability matrix.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+
+    generate_subparser.add_argument(
+        "number", help="Number of words to generate.",
+        type=int, default=1
+    )
+
+    generate_subparser.add_argument(
+        "-m", "--matrix",
+        help="Path to the statistic matrix generated with 'scribe analyze'.",
     )
 
     return parser
@@ -126,19 +153,30 @@ def main(arguments=None):
 
     elif namespace.subcommand == "analyze":
         logger.info(
-            "Generate probabilities from target: {0}".format(namespace.target)
+            "Generate statistics from target: {0}".format(namespace.target)
         )
 
         try:
             output = validate_output(namespace.output)
             content = fetch_target_content(namespace.target)
-            matrix = create_probability_matrix_from_words(content.split("\n"))
+            matrix = generate_statistics_from_words(content.split("\n"))
             matrix.tofile(output)
 
         except Exception as err:
             logger.error(
                 "[{0}] {1}".format(err.__class__.__name__, str(err))
             )
+
+    elif namespace.subcommand == "generate":
+        logger.info("Generate a new word")
+
+        matrix = np.fromfile(
+            namespace.matrix, dtype="int32"
+        ).reshape(256, 256, 256)
+
+        for index in range(namespace.number):
+            word = generate_word(matrix)
+            print(word, end="")
 
 
 def validate_output(path):
@@ -233,24 +271,99 @@ def yield_words_from_content(content):
             word = ""
 
 
-def create_probability_matrix_from_words(words):
-    """Return probability matrix generated from list of *words*.
-    """
-    matrix = np.zeros((256, 256, 256), dtype="int32")
+def generate_statistics_from_words(words):
+    """Return statistic matrix generated from list of *words*.
 
-    letter_buffer1 = 0
-    letter_buffer2 = 0
+    Analyze each word to generate a three dimensional matrix which indicate
+    the number of occurrences for each letter:
+
+        - at the first position of a word,
+        - at the second position of a word after a specific letter,
+        - following a specific combination of two letters,
+        - at the last position of a word.
+
+    Example::
+
+        >>> stats = generate_statistics_from_words([
+        ...     "Call", "me", "Ishmael", "Some", "years", "ago", "never",
+        ...     "mind", "how", "long", "precisely", "having", "little", "or",
+        ...     "no", "money", "in", "my", "purse", "and"
+        ... ])
+
+        # 4 words start with a 'm'
+        >>> stats[0, 0, ord(u"m")]
+
+        # The letter 'a' never follows the group of letters 'iu'
+        >>> stats[ord(u"i"), ord(u"u"), ord(u"a")]
+        0
+
+        # The letter 'r' follows once the group of letters 'ea'
+        >>> stats[ord(u"e"), ord(u"a"), ord(u"r")]
+        1
+
+        # 2 words finish by the group of letters 'nd'
+        >>> stats[ord(u"n"), ord(u"d"), ord(u"\\n")]
+        2
+
+    """
+    stats = np.zeros((256, 256, 256), dtype="int32")
 
     for word in words:
-        word = "\n{}\n".format(word)
+        letter_n1 = 0
+        letter_n2 = 0
+
+        word = word + chr(10)
         for letter in word:
             if (
                 letter not in string.punctuation and
                 not letter.isdigit()
             ):
-                ordinal = ord(letter)
-                matrix[letter_buffer1, letter_buffer2, ordinal] += 1
-                letter_buffer1 = letter_buffer2
-                letter_buffer2 = ordinal
+                index = ord(letter.decode("utf8"))
+                stats[letter_n2, letter_n1, index] += 1
+                letter_n2 = letter_n1
+                letter_n1 = index
 
-    return matrix
+    return stats
+
+
+def generate_word(stats):
+    """Return a word generated by using the *stats* matrix.
+
+    Build a :term:`Markov chain` from the three dimensional statistics matrix,
+    which would usually have been generated by
+    :func:`generate_statistics_from_words`.
+
+    Return a word created by respecting the probability of occurrence of each
+    letters.
+
+    Example:
+
+        >>> stats = generate_statistics_from_words([
+        ...     "Call", "me", "Ishmael", "Some", "years", "ago", "never",
+        ...     "mind", "how", "long", "precisely", "having", "little", "or",
+        ...     "no", "money", "in", "my", "purse", "and"
+        ... ])
+        >>> generate_word(stats)
+        mong
+
+    """
+    s = stats.sum(axis=2)
+    st = np.tile(s.T, (256, 1, 1)).T
+    p = stats.astype("float") / st
+    p[np.isnan(p)] = 0
+
+    word = u""
+
+    letter_n1 = 0
+    letter_n2 = 0
+
+    while not letter_n1 == 10:
+        index = np.random.choice(
+            range(256), 1, p=p[letter_n2, letter_n1, :]
+        )[0]
+
+        word = word + unichr(index)
+        letter_n2 = letter_n1
+        letter_n1 = index
+
+    return word
