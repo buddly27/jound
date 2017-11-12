@@ -12,17 +12,17 @@ Installing
 
 Installation is simple with `pip <http://www.pip-installer.org/>`_::
 
-    pip install scribe
+    pip install jound
 
 Installing from source
 ======================
 
 You can also install manually from the source for more control. First obtain a
 copy of the source by either downloading the
-`zipball <https://github.com/buddly27/scribe/archive/master.zip>`_ or
+`zipball <https://github.com/buddly27/jound/archive/master.zip>`_ or
 cloning the public repository::
 
-    git clone http://github.com/buddly27/scribe.git
+    git clone http://github.com/buddly27/jound.git
 
 Then you can build and install the package into your current Python
 environment::
@@ -59,7 +59,7 @@ Then you can build the documentation with the command::
 
 View the result in your browser at::
 
-    file:///path/to/scribe/build/doc/html/index.html
+    file:///path/to/jound/build/doc/html/index.html
 
 Running tests against the source
 --------------------------------
@@ -78,5 +78,5 @@ You can also generate a coverage report when running tests::
 
 View the generated report at::
 
-    file:///path/to/scribe/htmlcov/index.html
+    file:///path/to/jound/htmlcov/index.html
 

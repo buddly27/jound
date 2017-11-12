@@ -4,4 +4,4 @@
 Tutorial
 ********
 
-A quick dive into using Scribe.
+A quick dive into using Jound.

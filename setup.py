@@ -11,7 +11,7 @@ RESOURCE_PATH = os.path.join(ROOT_PATH, "resource")
 SOURCE_PATH = os.path.join(ROOT_PATH, "source")
 README_PATH = os.path.join(ROOT_PATH, "README.rst")
 
-PACKAGE_NAME = "scribe"
+PACKAGE_NAME = "jound"
 
 # Read version from source.
 with open(
@@ -47,12 +47,12 @@ TEST_REQUIRES = [
 ]
 
 setup(
-    name="scribe",
+    name=PACKAGE_NAME,
     version=VERSION,
     description="A word generator using statistics from a book",
     long_description=open(README_PATH).read(),
-    url="http://github.com/buddly27/scribe",
-    keywords="",
+    url="http://github.com/buddly27/jound",
+    keywords=["word", "generator", "markov", "chain"],
     author="Jeremy Retailleau",
     packages=find_packages(SOURCE_PATH),
     package_dir={
@@ -69,7 +69,7 @@ setup(
     zip_safe=False,
     entry_points={
         "console_scripts": [
-            "scribe = scribe.__main__:main"
+            "jound = jound.__main__:main"
         ]
     },
 )

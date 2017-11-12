@@ -4,10 +4,10 @@
 API Reference
 *************
 
-scribe
-======
+jound
+=====
 
-.. automodule:: scribe
+.. automodule:: jound
 
 .. toctree::
     :maxdepth: 1

@@ -25,13 +25,13 @@ logging.basicConfig(
 )
 
 # Command line logger
-logger = logging.getLogger("scribe")
+logger = logging.getLogger("jound")
 
 
 def construct_parser():
     """Return argument parser."""
     parser = argparse.ArgumentParser(
-        prog="scribe",
+        prog="jound",
         description="A word generator using statistics from a book",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
@@ -109,14 +109,14 @@ def construct_parser():
 
     generate_subparser.add_argument(
         "-m", "--matrix",
-        help="Path to the statistic matrix generated with 'scribe analyze'.",
+        help="Path to the statistic matrix generated with 'jound analyze'.",
     )
 
     return parser
 
 
 def main(arguments=None):
-    """Scribe command line interface."""
+    """Jound command line interface."""
     if arguments is None:
         arguments = []
 

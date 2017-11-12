@@ -4,4 +4,4 @@
 Introduction
 ************
 
-A brief introduction to Scribe.
+A brief introduction to Jound.

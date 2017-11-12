@@ -2,12 +2,12 @@
 
 import sys
 
-import scribe.command_line
+import jound.command_line
 
 
 def main():
     """Execute main command line interface passing command line arguments."""
-    scribe.command_line.main(sys.argv[1:])
+    jound.command_line.main(sys.argv[1:])
 
 
 if __name__ == "__main__":

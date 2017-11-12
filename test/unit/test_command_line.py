@@ -1,6 +1,6 @@
 # :coding: utf-8
 
-from scribe.command_line import main
+from jound.command_line import main
 
 
 def test_with_defaults():

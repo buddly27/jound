@@ -1,5 +1,5 @@
-*******************
-scribe.command_line
-*******************
+******************
+jound.command_line
+******************
 
-.. automodule:: scribe.command_line
+.. automodule:: jound.command_line
