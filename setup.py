@@ -49,7 +49,7 @@ TEST_REQUIRES = [
 setup(
     name=PACKAGE_NAME,
     version=VERSION,
-    description="A word generator using Markov chain",
+    description="Word generator using a Markov chain",
     long_description=open(README_PATH).read(),
     url="http://github.com/buddly27/jound",
     keywords=["word", "generator", "markov", "chain"],
