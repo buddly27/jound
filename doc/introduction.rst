@@ -34,3 +34,9 @@ Example::
     gantinge
     faltch
     jound
+
+
+This project was inspired by this excellent article:
+`La machine à inventer des mots`_ (in French)
+
+.. _La machine à inventer des mots: https://sciencetonnante.wordpress.com/2015/10/16/la-machine-a-inventer-des-mots-video/
