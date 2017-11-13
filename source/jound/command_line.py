@@ -8,7 +8,7 @@ import re
 import argparse
 import logging
 import codecs
-import string
+import unicodedata
 
 import requests
 import numpy as np
@@ -143,7 +143,7 @@ def main(arguments=None):
 
             logger.info("Writing {0} words to {1}".format(len(words), output))
 
-            with open(output, "w") as f:
+            with codecs.open(output, "w", encoding="utf8") as f:
                 f.write("\n".join(sorted(words)))
 
         except Exception as err:
@@ -160,6 +160,9 @@ def main(arguments=None):
             output = validate_output(namespace.output)
             content = fetch_target_content(namespace.target)
             matrix = generate_statistics_from_words(content.split("\n"))
+
+            logger.info("Writing statistics to {0}".format(output))
+
             matrix.tofile(output)
 
         except Exception as err:
@@ -225,7 +228,7 @@ def fetch_target_content(target, start=None, end=None):
                 "The targeted url is inaccessible: {0}".format(target)
             )
 
-        r.encoding = "ISO-8859-1"
+        r.encoding = "utf8"
         return r.text[start:end]
 
     target_file = os.path.abspath(target)
@@ -234,7 +237,7 @@ def fetch_target_content(target, start=None, end=None):
             "The targeted file is not readable: {0}".format(target_file)
         )
 
-    with codecs.open(target_file, "r", encoding="ISO-8859-1") as f:
+    with codecs.open(target_file, "r", encoding="utf8") as f:
         return f.read()[start:end]
 
 
@@ -260,11 +263,7 @@ def yield_words_from_content(content):
     word = ""
 
     for letter in content:
-        if (
-            letter not in string.whitespace and
-            letter not in string.punctuation and
-            not letter.isdigit()
-        ):
+        if unicodedata.category(letter).startswith("L"):
             word += letter
         elif len(word) > 0:
             yield word
@@ -309,19 +308,38 @@ def generate_statistics_from_words(words):
     stats = np.zeros((256, 256, 256), dtype="int32")
 
     for word in words:
+        analyze_word = True
+
+        indices = []
+        for letter in word:
+            if not unicodedata.category(letter).startswith("L"):
+                analyze_word = False
+                break
+
+            index = ord(letter)
+
+            # This algorithm only take the first 256 unicode characters
+            # into account. Letters such as 'œ' or 'Ω' are currently not
+            # recognized.
+            if index > 256:
+                analyze_word = False
+                break
+
+            indices.append(index)
+
+        if not analyze_word:
+            continue
+
+        # Append '\n' symbol to process statistics for end of words
+        indices.append(10)
+
         letter_n1 = 0
         letter_n2 = 0
 
-        word = word + chr(10)
-        for letter in word:
-            if (
-                letter not in string.punctuation and
-                not letter.isdigit()
-            ):
-                index = ord(letter.decode("utf8"))
-                stats[letter_n2, letter_n1, index] += 1
-                letter_n2 = letter_n1
-                letter_n1 = index
+        for index in indices:
+            stats[letter_n2, letter_n1, index] += 1
+            letter_n2 = letter_n1
+            letter_n1 = index
 
     return stats
 
