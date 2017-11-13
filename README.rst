@@ -9,7 +9,7 @@ It can analyze a text and assemble all words it contains to a file. This list
 of words can then be analyzed in order to generate a statistical file which
 records the number of occurrences of each letter after a particular combination
 of two letters. Finally, the statistical file can be used in order to generate
-words by computing a `Markov chain`_.
+words using a `Markov chain`_.
 
 Example::
 
