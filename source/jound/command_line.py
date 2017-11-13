@@ -228,7 +228,7 @@ def fetch_target_content(target, start=None, end=None):
                 "The targeted url is inaccessible: {0}".format(target)
             )
 
-        r.encoding = "utf8"
+        r.encoding = "ISO-8859-1"
         return r.text[start:end]
 
     target_file = os.path.abspath(target)
@@ -237,7 +237,7 @@ def fetch_target_content(target, start=None, end=None):
             "The targeted file is not readable: {0}".format(target_file)
         )
 
-    with codecs.open(target_file, "r", encoding="utf8") as f:
+    with codecs.open(target_file, "r", encoding="ISO-8859-1") as f:
         return f.read()[start:end]
 
 
