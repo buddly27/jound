@@ -21,7 +21,7 @@ words using a `Markov chain`_.
     [jound] INFO: Generate statistics from target: words.txt
     [jound] INFO: Writing statistics to ./stats.bin
 
-    >>> jound generate 10 -m stats.bin
+    >>> jound generate 10 -s stats.bin
     gook
     shancity
     ruts

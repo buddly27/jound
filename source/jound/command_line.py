@@ -108,8 +108,9 @@ def construct_parser():
     )
 
     generate_subparser.add_argument(
-        "-m", "--matrix",
-        help="Path to the statistic matrix generated with 'jound analyze'.",
+        "-s", "--statistical-file",
+        help="Path to the statistical file generated with 'jound analyze'.",
+        required=True
     )
 
     return parser
@@ -174,7 +175,7 @@ def main(arguments=None):
         logger.info("Generate a new word")
 
         matrix = np.fromfile(
-            namespace.matrix, dtype="int32"
+            namespace.statistical_file, dtype="int32"
         ).reshape(256, 256, 256)
 
         for index in range(namespace.number):

@@ -26,4 +26,4 @@ Release Notes
 
         Added :option:`generate number <jound generate number>` option to
         print out a list of N words computed from a :option:`statistical file
-        <jound generate -m>`.
+        <jound generate -s>`.
