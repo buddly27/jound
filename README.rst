@@ -11,7 +11,7 @@ records the number of occurrences of each letter after a particular combination
 of two letters. Finally, the statistical file can be used in order to generate
 words using a `Markov chain`_.
 
-Example::
+.. code-block:: bash
 
     >>> jound assemble Moby_Dick.txt
     [jound] INFO: Assemble words from target: Moby_Dick.txt
@@ -34,10 +34,8 @@ Example::
     jound
 
 
-.. note::
-
-    Project inspired by this excellent article:
-    `La machine à inventer des mots`_ (in French)
+This project was inspired by this excellent article:
+`La machine à inventer des mots`_ (in French)
 
 
 .. _Markov chain: https://en.wikipedia.org/wiki/Markov_chain
